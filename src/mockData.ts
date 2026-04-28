@@ -1,0 +1,58 @@
+export interface BlockData {
+  id: string;
+  name: string;
+  currentUsage: number;
+  target: number;
+  trustScore: number;
+  creditsEarned: number;
+  lastReported: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  block: string;
+  action: string;
+  units: number;
+  timestamp: string;
+}
+
+export interface ResidentComment {
+  id: string;
+  block: string;
+  message: string;
+  status: "open" | "investigating" | "fixed";
+  timestamp: string;
+}
+
+export const mockBlocks: BlockData[] = [
+  { id: "A", name: "Block A", currentUsage: 72, target: 80, trustScore: 95, creditsEarned: 120, lastReported: "10 mins ago" },
+  { id: "B", name: "Block B", currentUsage: 85, target: 80, trustScore: 82, creditsEarned: 90, lastReported: "15 mins ago" },
+  { id: "C", name: "Block C", currentUsage: 65, target: 80, trustScore: 98, creditsEarned: 150, lastReported: "5 mins ago" },
+  { id: "D", name: "Block D", currentUsage: 92, target: 80, trustScore: 70, creditsEarned: 40, lastReported: "1 hour ago" },
+  { id: "E", name: "Block E", currentUsage: 78, target: 80, trustScore: 88, creditsEarned: 100, lastReported: "20 mins ago" },
+  { id: "F", name: "Block F", currentUsage: 81, target: 80, trustScore: 85, creditsEarned: 95, lastReported: "2 mins ago" },
+];
+
+export const ghostGap = 42; // Difference between expected and reported supply
+
+export const mockActivityLogs: ActivityLog[] = Array.from({ length: 20 }, (_, i) => ({
+  id: `log-${i}`,
+  block: `Block ${String.fromCharCode(65 + Math.floor(Math.random() * 6))}`, // Random A-F
+  action: ["Water drawn", "Solar charged", "Filter replaced", "Maintenance check", "Credits redeemed"][Math.floor(Math.random() * 5)],
+  units: Math.floor(Math.random() * 50) + 1,
+  timestamp: new Date(Date.now() - Math.floor(Math.random() * 10000000)).toISOString(),
+}));
+
+export const mockResidentComments: ResidentComment[] = Array.from({ length: 15 }, (_, i) => ({
+  id: `comment-${i}`,
+  block: `Block ${String.fromCharCode(65 + Math.floor(Math.random() * 6))}`,
+  message: [
+    "Water pressure is low today.",
+    "Solar panel needs cleaning.",
+    "Community filter working great!",
+    "Suspicious leak near the main pipe.",
+    "Credits arrived on time.",
+  ][Math.floor(Math.random() * 5)],
+  status: ["open", "investigating", "fixed"][Math.floor(Math.random() * 3)] as "open" | "investigating" | "fixed",
+  timestamp: new Date(Date.now() - Math.floor(Math.random() * 80000000)).toISOString(),
+}));
