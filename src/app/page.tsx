@@ -49,7 +49,7 @@ export default function LandingPage() {
           style={{
             /* Using a high-quality placeholder for a plastic bottle in a stream. 
                Replace with your exact local file path (e.g. '/bottle.jpg') if you have it in the public folder */
-            backgroundImage: "url('https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=2000&auto=format&fit=crop')",
+            backgroundImage: "url('https://images.pexels.com/photos/31368357/pexels-photo-31368357.jpeg')",
           }}
         />
         {/* Cinematic Gradient Overlay (Darker to match murky water vibes) */}
@@ -132,5 +132,4 @@ export default function LandingPage() {
       </div>
     </div>
   );
-}
-
+} 
