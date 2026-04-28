@@ -38,7 +38,7 @@ export const ghostGap = 42; // Difference between expected and reported supply
 export const mockActivityLogs: ActivityLog[] = Array.from({ length: 20 }, (_, i) => ({
   id: `log-${i}`,
   block: `Block ${String.fromCharCode(65 + Math.floor(Math.random() * 6))}`, // Random A-F
-  action: ["Water drawn", "Solar charged", "Filter replaced", "Maintenance check", "Credits redeemed"][Math.floor(Math.random() * 5)],
+  action: ["Water drawn", "Tank filled", "Filter replaced", "Leak reported", "Valve adjusted"][Math.floor(Math.random() * 5)],
   units: Math.floor(Math.random() * 50) + 1,
   timestamp: new Date(Date.now() - Math.floor(Math.random() * 10000000)).toISOString(),
 }));

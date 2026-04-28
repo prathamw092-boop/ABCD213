@@ -3,9 +3,11 @@
 import { ReactLenis } from "@studio-freight/react-lenis";
 
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
+  // Disabled @studio-freight/react-lenis temporarily due to React 19 compatibility issues
+  // which causes the entire app to render a blank screen.
   return (
-    <ReactLenis root options={{ lerp: 0.1, duration: 1.5, smoothWheel: true }}>
+    <>
       {children}
-    </ReactLenis>
+    </>
   );
 }

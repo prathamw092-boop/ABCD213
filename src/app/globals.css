@@ -3,9 +3,10 @@
 
 @layer base {
   :root {
-    --background: #02080A;
-    --foreground: #FFFFFF;
-    --accent: #007A8B;
+    --background: #020617;
+    --foreground: #f8fafc;
+    --accent: #38bdf8;
+    --metallic: #94a3b8;
   }
 }
 
@@ -13,8 +14,15 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-metallic: var(--metallic);
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-outfit), system-ui, -apple-system, sans-serif;
+}
+
+.metallic-gradient {
+  background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 50%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 body {
