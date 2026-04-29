@@ -14,6 +14,7 @@ export const Navbar = () => {
     { name: "HOME", href: "/" },
     { name: "DASHBOARD", href: "/dashboard" },
     { name: "LEDGER", href: "/ledger" },
+    { name: "RESERVES", href: "/reserves" },
     { name: "COMMUNITY", href: "/community" },
   ];
 
@@ -28,9 +29,9 @@ export const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 md:px-12 py-8 bg-gradient-to-b from-[#020617]/80 to-transparent backdrop-blur-[2px] pointer-events-none">
       <div className="flex items-center gap-6 pointer-events-auto">
-        <Link href="/" className="text-white font-black tracking-tighter text-xl group flex flex-col leading-none">
-          <span className="group-hover:text-[#38bdf8] transition-colors duration-300">RESOURCE</span>
-          <span className="text-stroke text-sm group-hover:text-white/40 transition-colors duration-300">WATCH</span>
+        <Link href="/" className="group flex flex-col leading-none">
+          <span className="text-white font-black tracking-tighter text-xl group-hover:text-[#38bdf8] transition-colors duration-300">RESOURCE</span>
+          <span className="metallic-gradient text-sm font-black tracking-widest transition-opacity duration-300">WATCH</span>
         </Link>
       </div>
 

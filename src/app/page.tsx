@@ -53,15 +53,13 @@ export default function LandingPage() {
       {/* Cinematic Gradient Overlay (Deep Metallic Blues) */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/70 via-transparent to-[#020617]/95" />
       <div className="absolute inset-0 bg-[#020617]/40" />
-      <div className="h-20 w-full" /> {/* Spacer for fixed Navbar */}
-      {/* Vertical Links Removed - Handled by Top Nav */}
       {/* Main Content */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center px-4">
-        <div className="hero-title flex flex-col items-center select-none pointer-events-none">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
+        <div className="hero-title flex flex-col items-center select-none pointer-events-none w-full">
           <span className="text-[14vw] md:text-[10vw] leading-[0.85] font-black metallic-gradient tracking-tighter filter drop-shadow-[0_10px_30px_rgba(56,189,248,0.3)]">
             RESOURCE
           </span>
-          <span className="text-[12vw] md:text-[9vw] leading-[1.1] font-thin text-stroke tracking-[0.2em] -mt-2 md:-mt-4 filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
+          <span className="text-[12vw] md:text-[9vw] leading-[1.1] font-thin text-stroke tracking-[0.2em] pl-[0.2em] -mt-2 md:-mt-4 filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
             WATCH
           </span>
         </div>
@@ -70,7 +68,7 @@ export default function LandingPage() {
             href="/dashboard"
             className="group flex flex-col items-center gap-6"
           >
-            <div className="px-12 py-4 border border-white/20 rounded-full text-white text-[10px] font-bold tracking-[0.4em] hover:bg-[#38bdf8] hover:text-[#020617] hover:border-[#38bdf8] transition-all duration-500 backdrop-blur-md">
+            <div className="px-12 py-4 pl-[calc(3rem+0.4em)] border border-white/20 rounded-full text-white text-[10px] font-bold tracking-[0.4em] hover:bg-[#38bdf8] hover:text-[#020617] hover:border-[#38bdf8] transition-all duration-500 backdrop-blur-md">
               REPORT WASTE
             </div>
             <div className="relative overflow-hidden h-6 w-5">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { 
   Trophy, 
@@ -27,6 +27,7 @@ import {
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { mockBlocks, BlockData } from "@/mockData";
+import { supabase } from "@/lib/supabase";
 
 // --- Mock Data for 7-Day Trend ---
 const trendData = [
@@ -42,11 +43,11 @@ const trendData = [
 // --- Sub-Components ---
 
 // 1. Savings Champions Leaderboard
-const Leaderboard = () => {
+const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
   const [sortBy, setSortBy] = useState<"efficiency" | "trust" | "credits">("efficiency");
   
   const sortedBlocks = useMemo(() => {
-    return [...mockBlocks].sort((a, b) => {
+    return [...blocks].sort((a, b) => {
       if (sortBy === "efficiency") {
         const aDelta = a.target - a.currentUsage;
         const bDelta = b.target - b.currentUsage;
@@ -135,7 +136,7 @@ const Rectangle = dynamic(() => import("react-leaflet").then((mod) => mod.Rectan
 const TooltipMap = dynamic(() => import("react-leaflet").then((mod) => mod.Tooltip), { ssr: false });
 
 // 2. Consumption Heatmap (Leaflet Schematic Map)
-const ConsumptionHeatmap = () => {
+const ConsumptionHeatmap = ({ blocks }: { blocks: BlockData[] }) => {
   // Use simple CRS for schematic map
   const [L, setL] = useState<any>(null);
 
@@ -178,7 +179,7 @@ const ConsumptionHeatmap = () => {
           dragging={false}
         >
           {gridBlocks.map((pos) => {
-            const block = mockBlocks.find(b => b.id === pos.id)!;
+            const block = blocks.find(b => b.id === pos.id)!;
             const x = pos.col * 110 + 10;
             const y = 210 - (pos.row * 100 + 100); // Invert Y for Leaflet CRS.Simple
             
@@ -308,6 +309,50 @@ const TrendChart = () => {
 
 export default function CommunityPage() {
   const container = useRef<HTMLDivElement>(null);
+  const [dynamicBlocks, setDynamicBlocks] = useState<BlockData[]>(mockBlocks);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [{ data: resData }, { data: consData }] = await Promise.all([
+        supabase.from("water_reservations").select("*"),
+        supabase.from("water_consumption").select("*")
+      ]);
+      
+      const newBlocks = mockBlocks.map(b => ({ ...b, target: 0, currentUsage: 0 }));
+      
+      (resData || []).forEach(r => {
+        const charCode = r.email ? r.email.charCodeAt(0) : 65;
+        const index = charCode % 6;
+        newBlocks[index].target += r.reserved_amount;
+      });
+
+      (consData || []).forEach(c => {
+        const charCode = c.email ? c.email.charCodeAt(0) : 65;
+        const index = charCode % 6;
+        newBlocks[index].currentUsage += c.amount;
+      });
+      
+      newBlocks.forEach(b => {
+        if (b.target === 0) b.target = 80;
+      });
+
+      setDynamicBlocks(newBlocks);
+    };
+
+    fetchData();
+
+    const channel1 = supabase.channel('comm_cons')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'water_consumption' }, fetchData)
+      .subscribe();
+    const channel2 = supabase.channel('comm_res')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'water_reservations' }, fetchData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel1);
+      supabase.removeChannel(channel2);
+    };
+  }, []);
 
   useGSAP(() => {
     gsap.from(".comm-card", {
@@ -320,47 +365,68 @@ export default function CommunityPage() {
   }, { scope: container });
 
   return (
-    <div ref={container} className="min-h-screen bg-[#020617] pt-24 pb-12 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto">
-        {/* Admin Header */}
-        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="px-2 py-0.5 rounded bg-[#38bdf8]/10 border border-[#38bdf8]/20 text-[9px] font-black text-[#38bdf8] tracking-widest uppercase">
-                Admin Console
+    <div ref={container} className="relative min-h-screen w-full overflow-hidden bg-[#020617] font-sans selection:bg-[#38bdf8] selection:text-white">
+      {/* Cinematic Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover scale-105"
+      >
+        <source src="/water.mp4" type="video/mp4" />
+      </video>
+      {/* Cinematic Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/90 via-[#020617]/40 to-[#020617]/95 z-0" />
+
+      <div className="relative z-10 pt-32 pb-12 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="animate-in fade-in slide-in-from-left-4 duration-1000">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="px-3 py-1 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/20 text-[9px] font-black text-[#38bdf8] tracking-[0.3em] uppercase backdrop-blur-md">
+                  ADMIN CONSOLE
+                </div>
+                <span className="text-white/20 text-[9px] font-bold tracking-[0.2em] uppercase">SYSTEM INSIGHTS</span>
               </div>
-              <span className="text-white/20 text-[9px] font-bold tracking-[0.2em] uppercase">Water Pulse v2.0</span>
+              <h1 className="text-5xl md:text-7xl font-black metallic-gradient tracking-tighter mb-4 filter drop-shadow-[0_10px_30px_rgba(56,189,248,0.2)]">
+                COMMUNITY HUB
+              </h1>
+              <p className="text-white/40 text-sm font-medium tracking-tight max-w-lg leading-relaxed">
+                Visualizing the metallic flow of collective responsibility. 
+                Our ward analytics represent the transparency and efficiency of every shared drop.
+              </p>
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter">Community Insights</h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">Total Savings</div>
-              <div className="text-2xl font-black text-cyan-400 tracking-tight">+1,240L</div>
+            
+            <div className="flex items-center gap-6 animate-in fade-in slide-in-from-right-4 duration-1000">
+              <div className="text-right">
+                <div className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">Total Savings</div>
+                <div className="text-3xl font-black metallic-gradient tracking-tight">+1,240L</div>
+              </div>
+              <div className="w-px h-12 bg-white/10" />
+              <div className="text-right">
+                <div className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">Active Blocks</div>
+                <div className="text-3xl font-black text-white tracking-tight">06 / 06</div>
+              </div>
             </div>
-            <div className="w-px h-10 bg-white/10" />
-            <div className="text-right">
-              <div className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">Active Blocks</div>
-              <div className="text-2xl font-black text-white tracking-tight">06 / 06</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Leaderboard */}
-          <div className="lg:col-span-5 comm-card h-full">
-            <Leaderboard />
           </div>
 
-          {/* Right Column: Map + Chart */}
-          <div className="lg:col-span-7 flex flex-col gap-8 h-full">
-            <div className="comm-card">
-              <ConsumptionHeatmap />
+          {/* Layout Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Leaderboard */}
+            <div className="lg:col-span-5 comm-card h-full">
+              <Leaderboard blocks={dynamicBlocks} />
             </div>
-            <div className="comm-card">
-              <TrendChart />
+
+            {/* Right Column: Map + Chart */}
+            <div className="lg:col-span-7 flex flex-col gap-8 h-full">
+              <div className="comm-card">
+                <ConsumptionHeatmap blocks={dynamicBlocks} />
+              </div>
+              <div className="comm-card">
+                <TrendChart />
+              </div>
             </div>
           </div>
         </div>
@@ -370,6 +436,11 @@ export default function CommunityPage() {
         .text-stroke {
           -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
           color: transparent;
+        }
+        .metallic-card {
+          background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.08);
         }
       `}</style>
     </div>

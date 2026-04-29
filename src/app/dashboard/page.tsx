@@ -12,6 +12,7 @@ import {
   Waves,
   Filter
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import {
   RadialBarChart,
   RadialBar,
@@ -21,10 +22,8 @@ import {
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { mockBlocks, mockActivityLogs, ghostGap, ActivityLog } from "@/mockData";
-const HealthBar = () => {
-  const totalTarget = mockBlocks.length * 80;
-  const totalUsage = mockBlocks.reduce((acc, block) => acc + block.currentUsage, 0);
-  const percentage = Math.min(Math.round((totalUsage / totalTarget) * 100), 100);
+const HealthBar = ({ totalTarget, totalUsage }: { totalTarget: number; totalUsage: number }) => {
+  const percentage = totalTarget > 0 ? Math.min(Math.round((totalUsage / totalTarget) * 100), 100) : 0;
 
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +70,7 @@ const HealthBar = () => {
 };
 
 // 2. Ghost Gap Gauge
-const GhostGapGauge = () => {
+const GhostGapGauge = ({ ghostGap }: { ghostGap: number }) => {
   const data = [{ value: ghostGap }];
 
   const getStatus = (gap: number) => {
@@ -140,26 +139,52 @@ const GhostGapGauge = () => {
 
 // 3. Live Activity Feed (The Ticker)
 const ActivityTicker = () => {
-  const [logs, setLogs] = useState<ActivityLog[]>(mockActivityLogs);
+  const [logs, setLogs] = useState<any[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const fetchLogs = async () => {
+    const { data } = await supabase
+      .from("water_consumption")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (data) {
+      const formatted = data.map(d => ({
+        id: d.id,
+        block: `Block ${String.fromCharCode(65 + (d.email.charCodeAt(0) % 6))}`,
+        action: `Reported ${d.amount}L usage`,
+        units: d.amount,
+        timestamp: d.created_at,
+        email: d.email
+      }));
+      setLogs(formatted);
+    }
+  };
+
   useEffect(() => {
-    if (isPaused) return;
+    fetchLogs();
 
-    const interval = setInterval(() => {
-      const newLog: ActivityLog = {
-        id: `log-${Date.now()}`,
-        block: `Block ${String.fromCharCode(65 + Math.floor(Math.random() * 6))}`,
-        action: ["Water drawn", "Tank filled", "Filter replaced", "Leak reported", "Valve adjusted"][Math.floor(Math.random() * 5)],
-        units: Math.floor(Math.random() * 50) + 1,
-        timestamp: new Date().toISOString(),
-      };
+    const channel = supabase.channel('ticker_consumption')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'water_consumption' }, (payload) => {
+        if (isPaused) return;
+        const d = payload.new;
+        const newLog = {
+          id: d.id,
+          block: `Block ${String.fromCharCode(65 + (d.email.charCodeAt(0) % 6))}`,
+          action: `Reported ${d.amount}L usage`,
+          units: d.amount,
+          timestamp: d.created_at,
+          email: d.email
+        };
+        setLogs(prev => [newLog, ...prev.slice(0, 19)]);
+      })
+      .subscribe();
 
-      setLogs(prev => [newLog, ...prev.slice(0, 19)]);
-    }, 8000);
-
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isPaused]);
 
   const getIcon = (action: string) => {
@@ -200,7 +225,7 @@ const ActivityTicker = () => {
               </Link>
               <div className="flex items-center gap-2">
                 <span className="text-white/30">{getIcon(log.action)}</span>
-                <span className="text-xs text-white/80 font-medium">{log.action}</span>
+                <span className="text-xs text-white/80 font-medium truncate max-w-[150px]" title={log.email}>{log.action}</span>
               </div>
             </div>
             <span className="text-[10px] text-white/30 font-bold tabular-nums">
@@ -208,6 +233,55 @@ const ActivityTicker = () => {
             </span>
           </div>
         ))}
+        {logs.length === 0 && (
+          <div className="text-white/30 text-xs text-center py-4">No recent activity detected.</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// 3. Redistribution Banner
+const RedistributionBanner = () => {
+  const [stats, setStats] = useState<{ total_redistributed: number } | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await supabase.from("redistribution_stats").select("*").single();
+      if (data) setStats(data);
+    };
+    fetchStats();
+  }, []);
+
+  if (!stats || stats.total_redistributed <= 0) return null;
+
+  return (
+    <div className="col-span-full mb-4 overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#38bdf8]/10 via-[#38bdf8]/5 to-transparent border border-[#38bdf8]/20 backdrop-blur-md">
+      <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative">
+        <div className="flex items-center gap-6 z-10">
+          <div className="w-16 h-16 bg-[#38bdf8]/20 rounded-2xl flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(56,189,248,0.2)]">
+            <Droplets className="text-[#38bdf8] w-8 h-8 animate-pulse" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black text-[#38bdf8] tracking-[0.3em] uppercase mb-2">Community Bonus Active</div>
+            <h3 className="text-2xl font-black text-white tracking-tight">
+              <span className="metallic-gradient">{stats.total_redistributed}L</span> Shared Today
+            </h3>
+            <p className="text-white/40 text-[11px] font-medium tracking-tight mt-1">
+              Unused water from yesterday's reserves has been redistributed to the ward.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/reserves"
+          className="px-8 py-4 bg-[#38bdf8] text-[#020617] rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-white transition-all z-10"
+        >
+          Manage Your Reserve
+        </Link>
+
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-full bg-[#38bdf8]/5 rounded-full blur-[60px] translate-x-1/2" />
+        <Waves className="absolute bottom-0 right-10 text-white/5 w-32 h-32 -rotate-12 translate-y-1/2" />
       </div>
     </div>
   );
@@ -217,6 +291,38 @@ const ActivityTicker = () => {
 
 export default function DashboardPage() {
   const container = useRef<HTMLDivElement>(null);
+  const [stats, setStats] = useState({ totalTarget: 480, totalUsage: 0, ghostGap: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const [{ data: resData }, { data: consData }] = await Promise.all([
+        supabase.from("water_reservations").select("reserved_amount"),
+        supabase.from("water_consumption").select("amount")
+      ]);
+      
+      const target = (resData || []).reduce((acc, row) => acc + (row.reserved_amount || 0), 0) || 480;
+      const usage = (consData || []).reduce((acc, row) => acc + (row.amount || 0), 0);
+      const gap = Math.max(target - usage, 0);
+      const gapPercentage = target > 0 ? Math.round((gap / target) * 100) : 0;
+
+      setStats({ totalTarget: target, totalUsage: usage, ghostGap: gapPercentage });
+    };
+    
+    fetchStats();
+    
+    const channel1 = supabase.channel('dashboard_consumption')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'water_consumption' }, fetchStats)
+      .subscribe();
+      
+    const channel2 = supabase.channel('dashboard_reservations')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'water_reservations' }, fetchStats)
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel1);
+      supabase.removeChannel(channel2);
+    };
+  }, []);
 
   useGSAP(() => {
     gsap.from(".dashboard-card", {
@@ -229,53 +335,73 @@ export default function DashboardPage() {
   }, { scope: container });
 
   return (
-    <div ref={container} className="min-h-screen bg-[#020617] pt-24 pb-12 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Water Pulse</h1>
-            <p className="text-white/40 text-sm font-medium tracking-tight max-w-lg">
-              Real-time water accountability for the Kambi Ward community.
-              Monitor shared supply levels and identify leaks instantly.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#38bdf8]/10 border border-[#38bdf8]/20">
-              <div className="w-2 h-2 rounded-full bg-[#38bdf8] animate-pulse" />
-              <span className="text-[10px] font-black text-[#38bdf8] tracking-widest">SYSTEM ONLINE</span>
+    <div ref={container} className="relative min-h-screen w-full overflow-hidden bg-[#020617] font-sans selection:bg-[#38bdf8] selection:text-white">
+      {/* Cinematic Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover scale-105"
+      >
+        <source src="/water.mp4" type="video/mp4" />
+      </video>
+      {/* Cinematic Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/90 via-[#020617]/40 to-[#020617]/95 z-0" />
+
+      <div className="relative z-10 pt-32 pb-12 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="animate-in fade-in slide-in-from-left-4 duration-1000">
+              <h1 className="text-5xl md:text-7xl font-black metallic-gradient tracking-tighter mb-4 filter drop-shadow-[0_10px_30px_rgba(56,189,248,0.2)]">
+                WATER PULSE
+              </h1>
+              <p className="text-white/40 text-sm font-medium tracking-tight max-w-lg leading-relaxed">
+                Real-time water accountability for the Kambi Ward community.
+                Monitor shared supply levels and identify leaks instantly through our metallic grid.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-1000">
+              <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] animate-pulse shadow-[0_0_15px_#38bdf8]" />
+                <span className="text-[10px] font-black text-[#38bdf8] tracking-[0.3em]">SYSTEM ONLINE</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Health Bar - Full Width Top */}
-          <div className="lg:col-span-12 dashboard-card">
-            <HealthBar />
-          </div>
+          {/* Layout Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Redistribution Banner */}
+            <RedistributionBanner />
 
-          {/* Ghost Gap and Ticker Side by Side */}
-          <div className="lg:col-span-4 dashboard-card">
-            <GhostGapGauge />
-          </div>
-
-          <div className="lg:col-span-8 dashboard-card">
-            <ActivityTicker />
-          </div>
-        </div>
-
-        {/* Floating Action Button (Optional Aesthetic Detail) */}
-        <div className="mt-12 flex justify-center">
-          <Link
-            href="/community"
-            className="group flex items-center gap-4 text-white/40 hover:text-white transition-all duration-300"
-          >
-            <span className="text-[10px] font-bold tracking-[0.4em] uppercase">Detailed Analytics</span>
-            <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center group-hover:border-white/40 group-hover:bg-white/5 transition-all">
-              <ChevronRight className="w-5 h-5" />
+            {/* Health Bar - Full Width Top */}
+            <div className="lg:col-span-12 dashboard-card">
+              <HealthBar totalTarget={stats.totalTarget} totalUsage={stats.totalUsage} />
             </div>
-          </Link>
+
+            {/* Ghost Gap and Ticker Side by Side */}
+            <div className="lg:col-span-4 dashboard-card">
+              <GhostGapGauge ghostGap={stats.ghostGap} />
+            </div>
+
+            <div className="lg:col-span-8 dashboard-card">
+              <ActivityTicker />
+            </div>
+          </div>
+
+          {/* Floating Action Button */}
+          <div className="mt-16 flex justify-center dashboard-card">
+            <Link
+              href="/community"
+              className="group flex flex-col items-center gap-4 text-white/40 hover:text-white transition-all duration-500"
+            >
+              <span className="text-[10px] font-bold tracking-[0.5em] uppercase opacity-60 group-hover:opacity-100 transition-opacity">Detailed Analytics</span>
+              <div className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center group-hover:border-[#38bdf8] group-hover:bg-[#38bdf8]/10 transition-all duration-500 backdrop-blur-md">
+                <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -284,19 +410,20 @@ export default function DashboardPage() {
           width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.02);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.08);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(56, 189, 248, 0.2);
         }
-        .text-stroke {
-          -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
-          color: transparent;
+        .metallic-card {
+          background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.08);
         }
       `}</style>
     </div>
