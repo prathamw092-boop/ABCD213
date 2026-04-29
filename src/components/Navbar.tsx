@@ -17,6 +17,7 @@ export const Navbar = () => {
     { name: "RESERVES", href: "/reserves" },
     { name: "COMMUNITY", href: "/community" },
     { name: "EXCHANGE", href: "/exchange" },
+    { name: "VERIFY", href: "/verify" },
   ];
 
   const { user } = useAuth();

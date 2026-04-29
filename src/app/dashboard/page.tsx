@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
@@ -24,22 +23,18 @@ import { useGSAP } from "@gsap/react";
 import { mockBlocks, mockActivityLogs, ghostGap, ActivityLog } from "@/mockData";
 const HealthBar = ({ totalTarget, totalUsage }: { totalTarget: number; totalUsage: number }) => {
   const percentage = totalTarget > 0 ? Math.min(Math.round((totalUsage / totalTarget) * 100), 100) : 0;
-
   const barRef = useRef<HTMLDivElement>(null);
-
   useGSAP(() => {
     gsap.fromTo(barRef.current,
       { width: "0%" },
       { width: `${percentage}%`, duration: 1.5, ease: "power2.out" }
     );
   }, [percentage]);
-
   const getColor = (p: number) => {
     if (p < 60) return "bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)]";
     if (p < 85) return "bg-sky-500 shadow-[0_0_15px_rgba(14,165,233,0.4)]";
     return "bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]";
   };
-
   return (
     <div className="bg-[#0f172a]/60 border border-white/5 rounded-2xl p-8 backdrop-blur-md">
       <div className="flex justify-between items-end mb-4">
@@ -299,7 +294,7 @@ export default function DashboardPage() {
         supabase.from("water_reservations").select("reserved_amount"),
         supabase.from("water_consumption").select("amount")
       ]);
-      
+
       const target = (resData || []).reduce((acc, row) => acc + (row.reserved_amount || 0), 0) || 480;
       const usage = (consData || []).reduce((acc, row) => acc + (row.amount || 0), 0);
       const gap = Math.max(target - usage, 0);
@@ -307,17 +302,17 @@ export default function DashboardPage() {
 
       setStats({ totalTarget: target, totalUsage: usage, ghostGap: gapPercentage });
     };
-    
+
     fetchStats();
-    
+
     const channel1 = supabase.channel('dashboard_consumption')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'water_consumption' }, fetchStats)
       .subscribe();
-      
+
     const channel2 = supabase.channel('dashboard_reservations')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'water_reservations' }, fetchStats)
       .subscribe();
-      
+
     return () => {
       supabase.removeChannel(channel1);
       supabase.removeChannel(channel2);
