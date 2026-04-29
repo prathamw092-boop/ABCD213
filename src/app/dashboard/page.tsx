@@ -63,19 +63,14 @@ const HealthBar = ({ totalTarget, totalUsage }: { totalTarget: number; totalUsag
     </div>
   );
 };
-
-// 2. Ghost Gap Gauge
 const GhostGapGauge = ({ ghostGap }: { ghostGap: number }) => {
   const data = [{ value: ghostGap }];
-
   const getStatus = (gap: number) => {
     if (gap < 10) return { color: "#22d3ee", label: "Reporting is on track", alert: false };
     if (gap <= 25) return { color: "#38bdf8", label: "Some under-reporting detected", alert: false };
     return { color: "#818cf8", label: "Critical gap — check meters", alert: true };
   };
-
   const status = getStatus(ghostGap);
-
   return (
     <div className="bg-[#0f172a]/60 border border-white/5 rounded-2xl p-8 backdrop-blur-md flex flex-col items-center">
       <div className="w-full flex justify-between items-start mb-2">
@@ -92,7 +87,6 @@ const GhostGapGauge = ({ ghostGap }: { ghostGap: number }) => {
           <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
         )}
       </div>
-
       <div className="h-48 w-full relative">
         <ResponsiveContainer width="100%" height="100%">
           <RadialBarChart
@@ -124,27 +118,22 @@ const GhostGapGauge = ({ ghostGap }: { ghostGap: number }) => {
           <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Gap Score</span>
         </div>
       </div>
-
       <p className="mt-2 text-xs font-bold text-center tracking-tight" style={{ color: status.color }}>
         {status.label}
       </p>
     </div>
   );
 };
-
-// 3. Live Activity Feed (The Ticker)
 const ActivityTicker = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const fetchLogs = async () => {
     const { data } = await supabase
       .from("water_consumption")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
-
     if (data) {
       const formatted = data.map(d => ({
         id: d.id,
@@ -157,10 +146,8 @@ const ActivityTicker = () => {
       setLogs(formatted);
     }
   };
-
   useEffect(() => {
     fetchLogs();
-
     const channel = supabase.channel('ticker_consumption')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'water_consumption' }, (payload) => {
         if (isPaused) return;
@@ -176,19 +163,16 @@ const ActivityTicker = () => {
         setLogs(prev => [newLog, ...prev.slice(0, 19)]);
       })
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, [isPaused]);
-
   const getIcon = (action: string) => {
     if (action.includes("Leak")) return <AlertCircle className="w-3 h-3 text-cyan-400" />;
     if (action.includes("Filter")) return <Filter className="w-3 h-3 text-silver-400" />;
     if (action.includes("Tank")) return <Waves className="w-3 h-3 text-blue-400" />;
     return <Droplets className="w-3 h-3 text-sky-400" />;
   };
-
   return (
     <div className="bg-[#0f172a]/60 border border-white/5 rounded-2xl p-6 backdrop-blur-md flex flex-col h-full">
       <div className="flex justify-between items-center mb-6">
@@ -201,7 +185,6 @@ const ActivityTicker = () => {
           {isPaused ? "RESUME" : "PAUSE FEED"}
         </button>
       </div>
-
       <div
         ref={scrollRef}
         className="flex-1 max-h-[320px] overflow-y-auto space-y-3 pr-2 custom-scrollbar"
@@ -235,8 +218,6 @@ const ActivityTicker = () => {
     </div>
   );
 };
-
-// 3. Redistribution Banner
 const RedistributionBanner = () => {
   const [stats, setStats] = useState<{ total_redistributed: number } | null>(null);
 
@@ -247,9 +228,7 @@ const RedistributionBanner = () => {
     };
     fetchStats();
   }, []);
-
   if (!stats || stats.total_redistributed <= 0) return null;
-
   return (
     <div className="col-span-full mb-4 overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#38bdf8]/10 via-[#38bdf8]/5 to-transparent border border-[#38bdf8]/20 backdrop-blur-md">
       <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative">
@@ -273,7 +252,6 @@ const RedistributionBanner = () => {
         >
           Manage Your Reserve
         </Link>
-
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-full bg-[#38bdf8]/5 rounded-full blur-[60px] translate-x-1/2" />
         <Waves className="absolute bottom-0 right-10 text-white/5 w-32 h-32 -rotate-12 translate-y-1/2" />
@@ -281,20 +259,15 @@ const RedistributionBanner = () => {
     </div>
   );
 };
-
-// --- Main Page ---
-
 export default function DashboardPage() {
   const container = useRef<HTMLDivElement>(null);
   const [stats, setStats] = useState({ totalTarget: 480, totalUsage: 0, ghostGap: 0 });
-
   useEffect(() => {
     const fetchStats = async () => {
       const [{ data: resData }, { data: consData }] = await Promise.all([
         supabase.from("water_reservations").select("reserved_amount"),
         supabase.from("water_consumption").select("amount")
       ]);
-
       const target = (resData || []).reduce((acc, row) => acc + (row.reserved_amount || 0), 0) || 480;
       const usage = (consData || []).reduce((acc, row) => acc + (row.amount || 0), 0);
       const gap = Math.max(target - usage, 0);
@@ -384,7 +357,6 @@ export default function DashboardPage() {
               <ActivityTicker />
             </div>
           </div>
-
           {/* Floating Action Button */}
           <div className="mt-16 flex justify-center dashboard-card">
             <Link
@@ -399,7 +371,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
@@ -423,4 +394,4 @@ export default function DashboardPage() {
       `}</style>
     </div>
   );
-}
+} 

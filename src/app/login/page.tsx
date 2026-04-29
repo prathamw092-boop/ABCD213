@@ -60,7 +60,7 @@ export default function LoginPage() {
           user: {
             id: "mock-admin-id",
             email: lowerEmail,
-            user_metadata: { full_name: "Resource Admin" }
+            user_metadata: { full_name: "Jal Sakshi Admin" }
           }
         };
         localStorage.setItem("resource_watch_mock_user", JSON.stringify(mockUser));
@@ -137,8 +137,8 @@ export default function LoginPage() {
             </h1>
             <p className="text-white/50 text-sm mt-2 text-center">
               {isSignUp 
-                ? "Join the resource management community." 
-                : "Access your resource management portal."}
+                ? "Join the Jal Sakshi community." 
+                : "Access your Jal Sakshi portal."}
             </p>
           </div>
 

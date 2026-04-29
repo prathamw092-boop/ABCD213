@@ -57,10 +57,10 @@ export default function LandingPage() {
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
         <div className="hero-title flex flex-col items-center select-none pointer-events-none w-full">
           <span className="text-[14vw] md:text-[10vw] leading-[0.85] font-black metallic-gradient tracking-tighter filter drop-shadow-[0_10px_30px_rgba(56,189,248,0.3)]">
-            RESOURCE
+            JAL
           </span>
           <span className="text-[12vw] md:text-[9vw] leading-[1.1] font-thin text-stroke tracking-[0.2em] pl-[0.2em] -mt-2 md:-mt-4 filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
-            WATCH
+            SAKSHI
           </span>
         </div>
         <div className="explore-btn mt-20">
@@ -72,7 +72,7 @@ export default function LandingPage() {
               REPORT WASTE
             </div>
             <div className="relative overflow-hidden h-6 w-5">
-              <ChevronDown className="absolute inset-0 w-5 h-5 text-white/60 group-hover:translate-y-full transition-transform duration-500" />
+              <ChevronDown className="absolute insetw-0 w-5 h-5 text-white/60 group-hover:translate-y-full transition-transform duration-500" />
               <ChevronDown className="absolute -inset-y-5 inset-x-0 w-5 h-5 text-white group-hover:translate-y-5 transition-transform duration-500" />
             </div>
           </Link>
@@ -80,4 +80,4 @@ export default function LandingPage() {
       </main>
     </div>
   );
-} 
+}

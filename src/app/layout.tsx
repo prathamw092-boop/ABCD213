@@ -8,7 +8,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 export const metadata: Metadata = {
-  title: "ResourceWatch",
+  title: "JalSakshi",
   description: "Community resource management and analytics platform.",
 };
 export default function RootLayout({

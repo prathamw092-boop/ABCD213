@@ -32,8 +32,8 @@ export const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 md:px-12 py-8 bg-gradient-to-b from-[#020617]/80 to-transparent backdrop-blur-[2px] pointer-events-none">
       <div className="flex items-center gap-6 pointer-events-auto">
         <Link href="/" className="group flex flex-col leading-none">
-          <span className="text-white font-black tracking-tighter text-xl group-hover:text-[#38bdf8] transition-colors duration-300">RESOURCE</span>
-          <span className="metallic-gradient text-sm font-black tracking-widest transition-opacity duration-300">WATCH</span>
+          <span className="text-white font-black tracking-tighter text-xl group-hover:text-[#38bdf8] transition-colors duration-300">JAL</span>
+          <span className="metallic-gradient text-sm font-black tracking-widest transition-opacity duration-300">SAKSHI</span>
         </Link>
       </div>
 
