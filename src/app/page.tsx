@@ -4,8 +4,10 @@ import { Menu, ChevronDown } from "lucide-react";
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+
 export default function LandingPage() {
   const container = useRef<HTMLDivElement>(null);
+
   useGSAP(() => {
     const tl = gsap.timeline();
     tl.from(".nav-item", {
@@ -36,6 +38,7 @@ export default function LandingPage() {
         ease: "power3.out",
       }, "-=0.4");
   }, { scope: container });
+
   return (
     <div ref={container} className="relative min-h-screen w-full overflow-hidden bg-[#020617] font-sans selection:bg-[#38bdf8] selection:text-white">
       {/* Cinematic Background */}
@@ -46,13 +49,14 @@ export default function LandingPage() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover scale-105"
       >
-        {/* High-quality cinematic stream video */}
         <source src="/water.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      {/* Cinematic Gradient Overlay (Deep Metallic Blues) */}
+
+      {/* Cinematic Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/70 via-transparent to-[#020617]/95" />
       <div className="absolute inset-0 bg-[#020617]/40" />
+
       {/* Main Content */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
         <div className="hero-title flex flex-col items-center select-none pointer-events-none w-full">
@@ -63,6 +67,7 @@ export default function LandingPage() {
             SAKSHI
           </span>
         </div>
+
         <div className="explore-btn mt-20">
           <Link
             href="/dashboard"
@@ -72,7 +77,7 @@ export default function LandingPage() {
               REPORT WASTE
             </div>
             <div className="relative overflow-hidden h-6 w-5">
-              <ChevronDown className="absolute insetw-0 w-5 h-5 text-white/60 group-hover:translate-y-full transition-transform duration-500" />
+              <ChevronDown className="absolute inset-x-0 w-5 h-5 text-white/60 group-hover:translate-y-full transition-transform duration-500" />
               <ChevronDown className="absolute -inset-y-5 inset-x-0 w-5 h-5 text-white group-hover:translate-y-5 transition-transform duration-500" />
             </div>
           </Link>

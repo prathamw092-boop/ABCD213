@@ -5,6 +5,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { Navbar } from "@/components/Navbar";
 import { AuthProvider } from "@/components/AuthProvider";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ComplaintPortal } from "@/components/ComplaintPortal";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
             <SmoothScroll>
               <Navbar />
               {children}
+              <ComplaintPortal />
             </SmoothScroll>
           </AuthGuard>
         </AuthProvider>

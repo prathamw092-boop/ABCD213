@@ -7,7 +7,10 @@ import {
   Droplets, 
   Lock, 
   Mail, 
-  AlertCircle
+  AlertCircle,
+  User,
+  Home,
+  MapPin
 } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -15,6 +18,9 @@ import { useGSAP } from "@gsap/react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
+  const [blockNumber, setBlockNumber] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -60,7 +66,11 @@ export default function LoginPage() {
           user: {
             id: "mock-admin-id",
             email: lowerEmail,
-            user_metadata: { full_name: "Jal Sakshi Admin" }
+            user_metadata: { 
+              full_name: fullName || "Jal Sakshi Admin",
+              house_number: houseNumber || "A-1",
+              block_number: blockNumber || "HQ"
+            }
           }
         };
         localStorage.setItem("resource_watch_mock_user", JSON.stringify(mockUser));
@@ -78,6 +88,11 @@ export default function LoginPage() {
           password,
           options: {
             emailRedirectTo: window.location.origin,
+            data: {
+              full_name: fullName,
+              house_number: houseNumber,
+              block_number: blockNumber
+            }
           }
         });
         if (signUpError) {
@@ -150,6 +165,60 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleAuth} className="space-y-4">
+            {isSignUp && (
+              <>
+                <div className="login-item">
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/30 group-focus-within:text-[#38bdf8] transition-colors">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <input 
+                      type="text" 
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#38bdf8]/50 focus:ring-1 focus:ring-[#38bdf8]/50 focus:bg-white/10 transition-all"
+                      placeholder="Full Name"
+                      required={isSignUp}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="login-item">
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/30 group-focus-within:text-[#38bdf8] transition-colors">
+                        <Home className="w-4 h-4" />
+                      </div>
+                      <input 
+                        type="text" 
+                        value={houseNumber}
+                        onChange={(e) => setHouseNumber(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#38bdf8]/50 focus:ring-1 focus:ring-[#38bdf8]/50 focus:bg-white/10 transition-all"
+                        placeholder="House No."
+                        required={isSignUp}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="login-item">
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/30 group-focus-within:text-[#38bdf8] transition-colors">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <input 
+                        type="text" 
+                        value={blockNumber}
+                        onChange={(e) => setBlockNumber(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#38bdf8]/50 focus:ring-1 focus:ring-[#38bdf8]/50 focus:bg-white/10 transition-all"
+                        placeholder="Block No."
+                        required={isSignUp}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="login-item">
               <div className="relative group">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/30 group-focus-within:text-[#38bdf8] transition-colors">
@@ -159,10 +228,16 @@ export default function LoginPage() {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  list="admin-emails"
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#38bdf8]/50 focus:ring-1 focus:ring-[#38bdf8]/50 focus:bg-white/10 transition-all"
                   placeholder="Email"
                   required
                 />
+                <datalist id="admin-emails">
+                  {ADMIN_EMAILS.map(mail => (
+                    <option key={mail} value={mail} />
+                  ))}
+                </datalist>
               </div>
             </div>
 

@@ -6,17 +6,18 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase";
+import { NotificationCenter } from "./NotificationCenter";
 
 export const Navbar = () => {
   const pathname = usePathname();
-  
+
   const navLinks = [
     { name: "HOME", href: "/" },
     { name: "DASHBOARD", href: "/dashboard" },
     { name: "LEDGER", href: "/ledger" },
     { name: "RESERVES", href: "/reserves" },
     { name: "COMMUNITY", href: "/community" },
-    { name: "EXCHANGE", href: "/exchange" },
+    { name: "CREDITS", href: "/exchange" },
     { name: "VERIFY", href: "/verify" },
   ];
 
@@ -42,19 +43,18 @@ export const Navbar = () => {
           <Link
             key={link.name}
             href={link.href}
-            className={`hover:text-white transition-all duration-300 relative group py-2 ${
-              pathname === link.href ? "text-white" : ""
-            }`}
+            className={`hover:text-white transition-all duration-300 relative group py-2 ${pathname === link.href ? "text-white" : ""
+              }`}
           >
             {link.name}
-            <span className={`absolute bottom-0 left-0 h-[1px] bg-[#38bdf8] transition-all duration-500 group-hover:w-full ${
-              pathname === link.href ? "w-full" : "w-0"
-            }`} />
+            <span className={`absolute bottom-0 left-0 h-[1px] bg-[#38bdf8] transition-all duration-500 group-hover:w-full ${pathname === link.href ? "w-full" : "w-0"
+              }`} />
           </Link>
         ))}
       </div>
 
       <div className="flex items-center gap-6 pointer-events-auto">
+        {user && <NotificationCenter />}
         {user ? (
           <button
             onClick={handleLogout}

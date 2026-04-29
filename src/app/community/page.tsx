@@ -2,23 +2,23 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { 
-  Trophy, 
-  TrendingUp, 
-  Map as MapIcon, 
-  Info, 
+import {
+  Trophy,
+  TrendingUp,
+  Map as MapIcon,
+  Info,
   ChevronRight,
   Droplets,
   ArrowUpRight,
   ArrowDownRight
 } from "lucide-react";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   AreaChart,
   Area,
@@ -34,7 +34,7 @@ const trendData = [
   { day: "Mon", actual: 420, target: 480 },
   { day: "Tue", actual: 450, target: 480 },
   { day: "Wed", actual: 490, target: 480 },
-  { day: "Thu", actual: 540, target: 480 }, // Worst day
+  { day: "Thu", actual: 540, target: 480 },
   { day: "Fri", actual: 470, target: 480 },
   { day: "Sat", actual: 410, target: 480 },
   { day: "Sun", actual: 390, target: 480 },
@@ -45,7 +45,7 @@ const trendData = [
 // 1. Savings Champions Leaderboard
 const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
   const [sortBy, setSortBy] = useState<"efficiency" | "trust" | "credits">("efficiency");
-  
+
   const sortedBlocks = useMemo(() => {
     return [...blocks].sort((a, b) => {
       if (sortBy === "efficiency") {
@@ -77,9 +77,8 @@ const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
             <button
               key={mode}
               onClick={() => setSortBy(mode)}
-              className={`px-3 py-1 rounded-md text-[9px] font-black tracking-widest uppercase transition-all ${
-                sortBy === mode ? "bg-[#334155] text-white" : "text-white/30 hover:text-white/60"
-              }`}
+              className={`px-3 py-1 rounded-md text-[9px] font-black tracking-widest uppercase transition-all ${sortBy === mode ? "bg-[#334155] text-white" : "text-white/30 hover:text-white/60"
+                }`}
             >
               {mode}
             </button>
@@ -94,14 +93,14 @@ const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
           const percentage = (block.currentUsage / block.target) * 100;
 
           return (
-            <div 
+            <div
               key={block.id}
               className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group"
             >
               <div className="w-8 text-center text-lg font-black text-white/40">
                 {getMedal(index)}
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex justify-between items-end mb-1.5">
                   <span className="text-sm font-bold text-white group-hover:text-[#38bdf8] transition-colors">
@@ -113,7 +112,7 @@ const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full transition-all duration-1000 ${isOver ? "bg-rose-500" : "bg-[#334155]"}`}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
@@ -182,9 +181,9 @@ const ConsumptionHeatmap = ({ blocks }: { blocks: BlockData[] }) => {
             const block = blocks.find(b => b.id === pos.id)!;
             const x = pos.col * 110 + 10;
             const y = 210 - (pos.row * 100 + 100); // Invert Y for Leaflet CRS.Simple
-            
+
             const bounds: [[number, number], [number, number]] = [
-              [y, x], 
+              [y, x],
               [y + 90, x + 100]
             ];
 
@@ -252,38 +251,38 @@ const TrendChart = () => {
           <AreaChart data={trendData}>
             <defs>
               <linearGradient id="colorUsage" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-            <XAxis 
-              dataKey="day" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: "bold" }} 
+            <XAxis
+              dataKey="day"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: "bold" }}
             />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: "bold" }} 
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: "bold" }}
             />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: "#020617", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "10px" }}
               itemStyle={{ color: "#fff" }}
             />
-            <Area 
-              type="monotone" 
-              dataKey="actual" 
-              stroke="#06b6d4" 
+            <Area
+              type="monotone"
+              dataKey="actual"
+              stroke="#06b6d4"
               strokeWidth={3}
-              fillOpacity={1} 
-              fill="url(#colorUsage)" 
+              fillOpacity={1}
+              fill="url(#colorUsage)"
             />
-            <Line 
-              type="monotone" 
-              dataKey="target" 
-              stroke="rgba(255,255,255,0.2)" 
+            <Line
+              type="monotone"
+              dataKey="target"
+              stroke="rgba(255,255,255,0.2)"
               strokeWidth={2}
               strokeDasharray="5 5"
               dot={false}
@@ -297,7 +296,7 @@ const TrendChart = () => {
           <Info className="w-4 h-4" />
         </div>
         <p className="text-xs text-white/60 leading-relaxed">
-          The community used <span className="text-rose-400 font-bold">12% more</span> than target on <span className="text-white font-bold">Thursday</span> — the worst day this week. 
+          The community used <span className="text-rose-400 font-bold">12% more</span> than target on <span className="text-white font-bold">Thursday</span> — the worst day this week.
           Total savings are down by 800L compared to last week.
         </p>
       </div>
@@ -317,9 +316,9 @@ export default function CommunityPage() {
         supabase.from("water_reservations").select("*"),
         supabase.from("water_consumption").select("*")
       ]);
-      
+
       const newBlocks = mockBlocks.map(b => ({ ...b, target: 0, currentUsage: 0 }));
-      
+
       (resData || []).forEach(r => {
         const charCode = r.email ? r.email.charCodeAt(0) : 65;
         const index = charCode % 6;
@@ -331,7 +330,7 @@ export default function CommunityPage() {
         const index = charCode % 6;
         newBlocks[index].currentUsage += c.amount;
       });
-      
+
       newBlocks.forEach(b => {
         if (b.target === 0) b.target = 80;
       });
@@ -394,11 +393,11 @@ export default function CommunityPage() {
                 COMMUNITY HUB
               </h1>
               <p className="text-white/40 text-sm font-medium tracking-tight max-w-lg leading-relaxed">
-                Visualizing the metallic flow of collective responsibility. 
+                Visualizing the metallic flow of collective responsibility.
                 Our ward analytics represent the transparency and efficiency of every shared drop.
               </p>
             </div>
-            
+
             <div className="flex items-center gap-6 animate-in fade-in slide-in-from-right-4 duration-1000">
               <div className="text-right">
                 <div className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">Total Savings</div>
