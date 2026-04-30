@@ -88,9 +88,29 @@ const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
 
       <div className="space-y-4">
         {sortedBlocks.map((block, index) => {
-          const delta = block.target - block.currentUsage;
-          const isOver = delta < 0;
-          const percentage = (block.currentUsage / block.target) * 100;
+          const efficiencyDelta = block.target - block.currentUsage;
+          const isOver = efficiencyDelta < 0;
+          
+          let displayValue = "";
+          let label = "";
+          let percentage = 0;
+          let metricColor = "text-[#38bdf8]";
+
+          if (sortBy === "efficiency") {
+            displayValue = `${Math.abs(efficiencyDelta)}L`;
+            label = isOver ? "OVER" : "UNDER";
+            percentage = (block.currentUsage / block.target) * 100;
+            if (isOver) metricColor = "text-rose-400";
+          } else if (sortBy === "trust") {
+            displayValue = `${block.trustScore}%`;
+            label = "TRUST";
+            percentage = block.trustScore;
+          } else {
+            displayValue = `${block.creditsEarned} AC`;
+            label = "CREDITS";
+            // Map credits to a percentage for the bar (assuming max 200 for demo)
+            percentage = (block.creditsEarned / 200) * 100;
+          }
 
           return (
             <div
@@ -106,14 +126,14 @@ const Leaderboard = ({ blocks }: { blocks: BlockData[] }) => {
                   <span className="text-sm font-bold text-white group-hover:text-[#38bdf8] transition-colors">
                     {block.name}
                   </span>
-                  <div className={`flex items-center gap-1 text-[10px] font-black tracking-tight ${isOver ? "text-rose-400" : "text-[#38bdf8]"}`}>
-                    {isOver ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                    {Math.abs(delta)}L {isOver ? "OVER" : "UNDER"}
+                  <div className={`flex items-center gap-1 text-[10px] font-black tracking-tight ${metricColor}`}>
+                    {sortBy === "efficiency" && (isOver ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />)}
+                    {displayValue} {label}
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-1000 ${isOver ? "bg-rose-500" : "bg-[#334155]"}`}
+                    className={`h-full transition-all duration-1000 ${sortBy === "efficiency" && isOver ? "bg-rose-500" : "bg-[#334155]"}`}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
                 </div>
@@ -134,100 +154,167 @@ const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.Map
 const Rectangle = dynamic(() => import("react-leaflet").then((mod) => mod.Rectangle), { ssr: false });
 const TooltipMap = dynamic(() => import("react-leaflet").then((mod) => mod.Tooltip), { ssr: false });
 
-// 2. Consumption Heatmap (Leaflet Schematic Map)
+// 2. Consumption Heatmap (Cyber-Grid Schematic)
 const ConsumptionHeatmap = ({ blocks }: { blocks: BlockData[] }) => {
-  // Use simple CRS for schematic map
-  const [L, setL] = useState<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    import("leaflet").then((leaflet) => {
-      setL(leaflet);
+  useGSAP(() => {
+    gsap.from(".cyber-pod", {
+      scale: 0.8,
+      opacity: 0,
+      duration: 1,
+      stagger: {
+        grid: [2, 3],
+        from: "center",
+        amount: 0.5
+      },
+      ease: "elastic.out(1, 0.75)"
     });
-  }, []);
-
-  const gridBlocks = [
-    { id: "A", name: "Block A", row: 0, col: 0 }, { id: "B", name: "Block B", row: 0, col: 1 }, { id: "C", name: "Block C", row: 0, col: 2 },
-    { id: "D", name: "Block D", row: 1, col: 0 }, { id: "E", name: "Block E", row: 1, col: 1 }, { id: "F", name: "Block F", row: 1, col: 2 },
-  ];
+  }, { scope: containerRef });
 
   const getColor = (usage: number, target: number) => {
     const ratio = usage / target;
-    if (ratio < 0.8) return "#06b6d4"; // Cyan
-    if (ratio <= 1.0) return "#38bdf8"; // Sky
-    return "#6366f1"; // Indigo
+    if (ratio < 0.6) return "from-cyan-500/80 to-cyan-500/40";
+    if (ratio <= 1.0) return "from-[#38bdf8]/80 to-[#38bdf8]/40";
+    return "from-rose-500/80 to-rose-500/40";
   };
 
-  if (!L) return <div className="h-[300px] bg-black/20 animate-pulse rounded-xl" />;
+  const getBorderColor = (usage: number, target: number) => {
+    const ratio = usage / target;
+    if (ratio < 0.6) return "border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.2)]";
+    if (ratio <= 1.0) return "border-[#38bdf8]/60 shadow-[0_0_15px_rgba(56,189,248,0.2)]";
+    return "border-rose-500/80 shadow-[0_0_25px_rgba(244,63,94,0.4)]";
+  };
+
+  const getLiquidColor = (usage: number, target: number) => {
+    const ratio = usage / target;
+    if (ratio < 0.6) return "bg-cyan-500";
+    if (ratio <= 1.0) return "bg-[#38bdf8]";
+    return "bg-rose-500";
+  };
 
   return (
-    <div className="bg-[#0f172a]/60 border border-white/5 rounded-2xl p-6 backdrop-blur-md">
-      <div className="flex items-center gap-3 mb-6">
-        <MapIcon className="w-5 h-5 text-[#38bdf8]" />
-        <h2 className="text-white text-lg font-black tracking-tight">Water Consumption Heatmap</h2>
+    <div ref={containerRef} className="bg-[#0f172a]/60 border border-white/5 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden group">
+      <div className="flex items-center justify-between mb-8 relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/10 border border-[#38bdf8]/20 flex items-center justify-center">
+            <MapIcon className="w-5 h-5 text-[#38bdf8]" />
+          </div>
+          <div>
+            <h2 className="text-white text-lg font-black tracking-tight">Kambi Grid Schematic</h2>
+            <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Real-time flow distribution</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[9px] font-black text-white/60 tracking-widest uppercase">Live Nodes</span>
+        </div>
       </div>
 
-      <div className="h-[300px] w-full rounded-xl overflow-hidden border border-white/10 bg-black/40">
-        <MapContainer
-          crs={L.CRS.Simple}
-          bounds={[[0, 0], [220, 340]]}
-          style={{ height: "100%", width: "100%", background: "transparent" }}
-          zoomControl={false}
-          attributionControl={false}
-          doubleClickZoom={false}
-          scrollWheelZoom={false}
-          dragging={false}
-        >
-          {gridBlocks.map((pos) => {
-            const block = blocks.find(b => b.id === pos.id)!;
-            const x = pos.col * 110 + 10;
-            const y = 210 - (pos.row * 100 + 100); // Invert Y for Leaflet CRS.Simple
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
+        {blocks.map((block) => {
+          const ratio = Math.min(block.currentUsage / block.target, 1.2);
+          const percentage = Math.min(ratio * 100, 100);
+          const isOver = block.currentUsage > block.target;
 
-            const bounds: [[number, number], [number, number]] = [
-              [y, x],
-              [y + 90, x + 100]
-            ];
-
-            const color = getColor(block.currentUsage, block.target);
-
-            return (
-              <Rectangle
-                key={pos.id}
-                bounds={bounds}
-                pathOptions={{
-                  fillColor: color,
-                  fillOpacity: 0.3,
-                  color: color,
-                  weight: 2
-                }}
+          return (
+            <div
+              key={block.id}
+              className={`cyber-pod relative aspect-[4/3] rounded-2xl border transition-all duration-500 hover:scale-[1.02] hover:z-20 group/pod ${getBorderColor(block.currentUsage, block.target)} bg-black/40 overflow-hidden`}
+            >
+              {/* Background Glow */}
+              <div className={`absolute inset-0 bg-gradient-to-br opacity-80 ${getColor(block.currentUsage, block.target)}`} />
+              
+              {/* Liquid Fill */}
+              <div 
+                className={`absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out ${getLiquidColor(block.currentUsage, block.target)}`}
+                style={{ height: `${percentage}%` }}
               >
-                <TooltipMap permanent direction="center" className="schematic-tooltip">
-                  <div className="text-center">
-                    <div className="text-[10px] font-black text-white uppercase tracking-widest">{block.name}</div>
-                    <div className="text-[8px] font-bold text-white/60">{block.currentUsage}L / {block.target}L</div>
-                    <div className="text-[7px] font-bold text-white/40 mt-1 uppercase">Trust: {block.trustScore}%</div>
+                <div className="absolute top-0 left-0 right-0 h-4 -translate-y-1/2 overflow-hidden">
+                  <div className="w-[200%] h-full bg-white/10 blur-sm animate-wave" />
+                </div>
+              </div>
+
+              {/* Data Overlay */}
+              <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
+                <div className="flex justify-between items-start">
+                  <span className="text-[12px] font-black text-white tracking-[0.2em] uppercase drop-shadow-md">{block.name}</span>
+                  {isOver && (
+                    <div className="px-2 py-0.5 rounded bg-rose-600 text-[10px] font-black text-white uppercase tracking-tighter shadow-lg border border-rose-400">
+                      LEAK ALERT
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-white tracking-tighter drop-shadow-lg">{block.currentUsage}</span>
+                    <span className="text-[12px] font-bold text-white uppercase drop-shadow-md">Liters</span>
                   </div>
-                </TooltipMap>
-              </Rectangle>
-            );
-          })}
-        </MapContainer>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden border border-white/20">
+                      <div 
+                        className={`h-full ${isOver ? 'bg-rose-400' : 'bg-white'}`}
+                        style={{ width: `${Math.min((block.currentUsage / block.target) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] font-black text-white drop-shadow-md">{block.target}L</span>
+                  </div>
+                  <div className="pt-2 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest drop-shadow-md">Trust Index</span>
+                    <span className={`text-[12px] font-black drop-shadow-md ${block.trustScore > 80 ? 'text-emerald-300' : 'text-amber-300'}`}>
+                      {block.trustScore}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hover Glow Effect */}
+              <div className="absolute inset-0 bg-[#38bdf8]/0 group-hover/pod:bg-[#38bdf8]/5 transition-colors pointer-events-none" />
+            </div>
+          );
+        })}
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-[8px] font-black tracking-[0.2em] text-white/30 uppercase">
-        <span>Low Consumption</span>
-        <div className="h-1 flex-1 mx-4 rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-indigo-500" />
-        <span>High Consumption</span>
+      <div className="mt-10 flex items-center justify-between">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]" />
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Optimal</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_10px_#38bdf8]" />
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Nominal</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e]" />
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Critical</span>
+          </div>
+        </div>
+        <div className="text-[9px] font-bold text-white/20 uppercase tracking-[0.4em]">Grid_ID: KB_0051</div>
       </div>
+
+      {/* Decorative scanning line */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#38bdf8]/20 to-transparent animate-scan" />
 
       <style jsx global>{`
-        .schematic-tooltip {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          color: white !important;
+        @keyframes wave {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
-        .leaflet-container {
-          background-color: transparent !important;
+        .animate-wave {
+          animation: wave 3s linear infinite;
+          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+          background-size: 50% 100%;
+        }
+        @keyframes scan {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan {
+          animation: scan 4s linear infinite;
         }
       `}</style>
     </div>
@@ -312,27 +399,70 @@ export default function CommunityPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: resData }, { data: consData }] = await Promise.all([
+      const [
+        { data: resData },
+        { data: consData },
+        { data: avgData },
+        { data: creditData }
+      ] = await Promise.all([
         supabase.from("water_reservations").select("*"),
-        supabase.from("water_consumption").select("*")
+        supabase.from("water_consumption").select("*"),
+        supabase.from("weekly_averages").select("*"),
+        supabase.from("user_credits").select("*")
       ]);
 
-      const newBlocks = mockBlocks.map(b => ({ ...b, target: 0, currentUsage: 0 }));
+      const newBlocks = mockBlocks.map(b => ({ 
+        ...b, 
+        target: 0, 
+        currentUsage: 0, 
+        trustScore: 100, 
+        creditsEarned: 0 
+      }));
 
+      const blockCount = mockBlocks.length;
+
+      // Map targets (reservations)
       (resData || []).forEach(r => {
         const charCode = r.email ? r.email.charCodeAt(0) : 65;
-        const index = charCode % 6;
+        const index = charCode % blockCount;
         newBlocks[index].target += r.reserved_amount;
       });
 
+      // Map current usage
       (consData || []).forEach(c => {
         const charCode = c.email ? c.email.charCodeAt(0) : 65;
-        const index = charCode % 6;
+        const index = charCode % blockCount;
         newBlocks[index].currentUsage += c.amount;
       });
 
+      // Map credits
+      (creditData || []).forEach(cr => {
+        const charCode = cr.user_id ? cr.user_id.charCodeAt(0) : 65;
+        const index = charCode % blockCount;
+        newBlocks[index].creditsEarned += cr.balance;
+      });
+
+      // Calculate Trust Scores (comparing usage to averages)
+      (consData || []).forEach(c => {
+        const userAvg = (avgData || []).find(a => a.user_id === c.email)?.avg_consumption || 80;
+        const diff = Math.abs(userAvg - c.amount);
+        let score = 100;
+        if (diff > 5) score = 85;
+        if (diff > 15) score = 60;
+        if (diff > 25) score = 30;
+
+        const charCode = c.email ? c.email.charCodeAt(0) : 65;
+        const index = charCode % blockCount;
+        // Average the scores for the block
+        newBlocks[index].trustScore = Math.round((newBlocks[index].trustScore + score) / 2);
+      });
+
       newBlocks.forEach(b => {
-        if (b.target === 0) b.target = 80;
+        const originalMock = mockBlocks.find(m => m.id === b.id);
+        if (b.target === 0) b.target = originalMock?.target || 80;
+        if (b.currentUsage === 0) b.currentUsage = originalMock?.currentUsage || 60;
+        if (b.creditsEarned === 0) b.creditsEarned = originalMock?.creditsEarned || 50;
+        if (b.trustScore === 100 && originalMock) b.trustScore = originalMock.trustScore;
       });
 
       setDynamicBlocks(newBlocks);

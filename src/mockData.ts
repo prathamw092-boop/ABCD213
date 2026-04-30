@@ -24,10 +24,12 @@ export interface ResidentComment {
 export const mockBlocks: BlockData[] = [
   { id: "A", name: "Block A", currentUsage: 72, target: 80, trustScore: 95, creditsEarned: 120, lastReported: "10 mins ago" },
   { id: "B", name: "Block B", currentUsage: 85, target: 80, trustScore: 82, creditsEarned: 90, lastReported: "15 mins ago" },
-  { id: "C", name: "Block C", currentUsage: 65, target: 80, trustScore: 98, creditsEarned: 150, lastReported: "5 mins ago" },
-  { id: "D", name: "Block D", currentUsage: 92, target: 80, trustScore: 70, creditsEarned: 40, lastReported: "1 hour ago" },
-  { id: "E", name: "Block E", currentUsage: 78, target: 80, trustScore: 88, creditsEarned: 100, lastReported: "20 mins ago" },
+  { id: "C", name: "Block C", currentUsage: 65, target: 80, trustScore: 98, creditsEarned: 165, lastReported: "5 mins ago" },
+  { id: "D", name: "Block D", currentUsage: 92, target: 80, trustScore: 64, creditsEarned: 35, lastReported: "1 hour ago" },
+  { id: "E", name: "Block E", currentUsage: 78, target: 80, trustScore: 89, creditsEarned: 110, lastReported: "20 mins ago" },
   { id: "F", name: "Block F", currentUsage: 81, target: 80, trustScore: 85, creditsEarned: 95, lastReported: "2 mins ago" },
+  { id: "G", name: "Block G", currentUsage: 60, target: 80, trustScore: 99, creditsEarned: 190, lastReported: "Just now" },
+  { id: "H", name: "Block H", currentUsage: 88, target: 80, trustScore: 78, creditsEarned: 55, lastReported: "45 mins ago" },
 ];
 export const ghostGap = 42; // Difference between expected and reported supply
 export const mockActivityLogs: ActivityLog[] = Array.from({ length: 20 }, (_, i) => ({
